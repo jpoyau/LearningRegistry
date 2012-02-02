@@ -401,7 +401,7 @@ class TestDistribute(object):
                 """Push to distribution with filter out failed ... """
                 
     def test_push_distribute_with_predicate(self):
-        """ Test push to distribution with predicate function """
+        """ Test push to distribution with filter and predicate function """
         
         sourceNode =self._NODES[0]
         destinationNode = self._NODES[1]
@@ -423,3 +423,31 @@ class TestDistribute(object):
         assert sourceNode.compareDistributedResources(destinationNode, 
                                                                                 destinationNode._nodeFilterDescription, predicate), \
                 """Push to distribution with filter in failed ... """
+
+    def test_push_distribute_with_filter_and_predicate(self):
+        """ Test push to distribution with predicate function """
+            
+        sourceNode =self._NODES[0]
+        destinationNode = self._NODES[1]
+        self._setupNodePair(sourceNode, destinationNode, addConnection=False)
+        self._pushMarkedData(sourceNode, 50, 5)
+        
+        destinationFilter = {"include_exclude": False,
+                                          "filter":[{"filter_key":"keys", "filter_value":"Filter Me In"}],
+                                        }
+        destinationNode.setFilterInfo(**destinationFilter )
+        
+        predicate = """function(doc){
+            if(doc.active)
+            {
+                return true;
+            }
+            return false;
+        }
+        """
+        response = self._doPushToTest(sourceNode, destinationNode, predicate)
+        
+        assert (response[self.__OK]), "Replication failed..."
+        assert sourceNode.compareDistributedResources(destinationNode, 
+                                                                                destinationNode._nodeFilterDescription, predicate), \
+                """Push to distribution with filter and predicate failed ... """
